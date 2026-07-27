@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE     = "myapp:${env.BUILD_NUMBER}"
+        DOCKER_IMAGE      = "myapp:${env.BUILD_NUMBER}"
         SONAR_PROJECT_KEY = "my-org_my-repo"
     }
 
@@ -24,13 +24,11 @@ pipeline {
             steps {
                 echo "Running SonarQube analysis..."
                 script {
-                    withSonarQubeEnv('sonarqube ') {
+                    withSonarQubeEnv('sonarqube') {
                         sh '''
                             sonar-scanner \
                               -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                              -Dsonar.sources=. \
-                              -Dsonar.host.url=${SONAR_HOST_URL} \
-                              -Dsonar.login=${SONAR_AUTH_TOKEN}
+                              -Dsonar.sources=.
                         '''
                     }
                 }
