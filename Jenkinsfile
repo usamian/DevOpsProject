@@ -24,7 +24,7 @@ pipeline {
             steps {
                 echo "Running SonarQube analysis..."
                 script {
-                    withSonarQubeEnv('sonar-server') {
+                    withSonarQubeEnv('sonarqube ') {
                         sh '''
                             sonar-scanner \
                               -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
