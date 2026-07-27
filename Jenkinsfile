@@ -1,67 +1,57 @@
 pipeline {
+
     agent any
 
     environment {
-        DOCKER_IMAGE      = "myapp:${env.BUILD_NUMBER}"
-        SONAR_PROJECT_KEY = "my-org_my-repo"
-    }
-
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-        timeout(time: 30, unit: 'MINUTES')
+        IMAGE_NAME = "python-devops-app"
     }
 
     stages {
 
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                echo "Checking out source code..."
                 checkout scm
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Check Python Version') {
             steps {
-                echo "Running SonarQube analysis..."
-                script {
-                    withSonarQubeEnv('sonarqube') {
-                        sh '''
-                            sonar-scanner \
-                              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                              -Dsonar.sources=.
-                        '''
-                    }
+                sh 'python3 --version'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip3 install -r requirements.txt'
+            }
+        }
+
+        stage('SonarQube Scan') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh 'sonar-scanner'
                 }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo "Building Docker image: ${DOCKER_IMAGE}"
-                script {
-                    docker.build("${DOCKER_IMAGE}")
-                }
+                sh 'docker build -t ${IMAGE_NAME}:latest .'
             }
         }
 
-        stage('Push Docker Image') {
-            when {
-                branch 'main'
-            }
-            steps {
-                echo "Pushing ${DOCKER_IMAGE} to registry..."
-                script {
-                    docker.withRegistry('https://registry.example.com', 'docker-registry-cred-id') {
-                        docker.image("${DOCKER_IMAGE}").push()
-                    }
-                }
-            }
-        }
     }
 
     post {
-        always {
-            echo "Pipeline finished with status: ${currentBuild.currentResult}"
+
+        success {
+            echo 'Pipeline completed successfully.'
         }
+
+        failure {
+            echo 'Pipeline failed.'
+        }
+
     }
+
 }
