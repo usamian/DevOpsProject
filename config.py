@@ -5,7 +5,7 @@ All runtime settings loaded from environment variables with safe defaults.
 This module provides backward compatibility by importing from the new
 src.core.config module while maintaining the legacy interface.
 """
-
+#devops branch
 import os
 from pathlib import Path
 from dotenv import load_dotenv
