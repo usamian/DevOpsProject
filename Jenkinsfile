@@ -1,20 +1,11 @@
 pipeline {
-
     agent any
 
     environment {
-        IMAGE_NAME = "sample-app"
+        SONAR_SCANNER = "sonar-scanner"
     }
 
     stages {
-
-        stage('Clone Repository') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/usamian/DevOpsProject.git',
-                    credentialsId: 'github'
-            }
-        }
 
         stage('Check Python') {
             steps {
@@ -33,26 +24,30 @@ pipeline {
                 withSonarQubeEnv('sonarqube') {
                     sh '''
                     sonar-scanner \
-                    -Dsonar.projectKey=DevOpsProject \
-                    -Dsonar.sources=. \
-                    -Dsonar.host.url=$SONAR_HOST_URL \
-                    -Dsonar.token=$SONAR_AUTH_TOKEN
+                      -Dsonar.projectKey=DevOpsProject \
+                      -Dsonar.sources=. \
+                      -Dsonar.host.url=http://sonarqube:9000 \
+                      -Dsonar.token=$SONAR_AUTH_TOKEN
                     '''
                 }
             }
         }
 
+        stage('Verify Workspace') {
+            steps {
+                sh 'pwd'
+                sh 'ls -la'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
-                sh '''
-                docker build -t $IMAGE_NAME .
-                '''
+                sh 'docker build -t sample-app .'
             }
         }
     }
 
     post {
-
         success {
             echo 'Pipeline Successful'
         }
