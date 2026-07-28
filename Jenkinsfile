@@ -1,67 +1,68 @@
 pipeline {
+
     agent any
 
     environment {
-        DOCKER_IMAGE      = "myapp:${env.BUILD_NUMBER}"
-        SONAR_PROJECT_KEY = "my-org_my-repo"
-    }
-
-    options {
-        buildDiscarder(logRotator(numToKeepStr: '10'))
-        timeout(time: 30, unit: 'MINUTES')
+        IMAGE_NAME = "sample-app"
     }
 
     stages {
 
-        stage('Checkout') {
+        stage('Clone Repository') {
             steps {
-                echo "Checking out source code..."
-                checkout scm
+                git branch: 'main',
+                    url: 'https://github.com/usamian/DevOpsProject.git',
+                    credentialsId: 'github'
+            }
+        }
+
+        stage('Check Python') {
+            steps {
+                sh 'python3 --version'
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip3 install --break-system-packages -r requirements.txt'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                echo "Running SonarQube analysis..."
-                script {
-                    withSonarQubeEnv('sonarqube') {
-                        sh '''
-                            sonar-scanner \
-                              -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                              -Dsonar.sources=.
-                        '''
-                    }
+                withSonarQubeEnv('sonarqube') {
+                    sh '''
+                    sonar-scanner \
+                    -Dsonar.projectKey=DevOpsProject \
+                    -Dsonar.sources=. \
+                    -Dsonar.host.url=$SONAR_HOST_URL \
+                    -Dsonar.token=$SONAR_AUTH_TOKEN
+                    '''
                 }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo "Building Docker image: ${DOCKER_IMAGE}"
-                script {
-                    docker.build("${DOCKER_IMAGE}")
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
-            when {
-                branch 'main'
-            }
-            steps {
-                echo "Pushing ${DOCKER_IMAGE} to registry..."
-                script {
-                    docker.withRegistry('https://registry.example.com', 'docker-registry-cred-id') {
-                        docker.image("${DOCKER_IMAGE}").push()
-                    }
-                }
+                sh '''
+                docker build -t $IMAGE_NAME .
+                '''
             }
         }
     }
 
     post {
+
+        success {
+            echo 'Pipeline Successful'
+        }
+
+        failure {
+            echo 'Pipeline Failed'
+        }
+
         always {
-            echo "Pipeline finished with status: ${currentBuild.currentResult}"
+            cleanWs()
         }
     }
 }
