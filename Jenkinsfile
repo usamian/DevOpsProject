@@ -2,42 +2,50 @@ pipeline {
 
     agent any
 
+    tools {
+        sonarQube 'SonarScanner'
+    }
+
     environment {
-        IMAGE_NAME = "python-devops-app"
+        IMAGE_NAME = "sample-app"
     }
 
     stages {
 
-        stage('Checkout Code') {
+        stage('Clone Repository') {
             steps {
-                checkout scm
+                git branch: 'main',
+                    url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git',
+                    credentialsId: 'github-token'
             }
         }
 
-        stage('Check Python Version') {
-            steps {
-                sh 'python3 --version'
-            }
-        }
-
-        stage('Install Dependencies') {
-            steps {
-                sh 'pip3 install --break-system-packages -r requirements.txt'
-            }
-        }
-
-        stage('SonarQube Scan') {
+        stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    sh 'sonar-scanner'
+
+                    sh '''
+                    sonar-scanner \
+                    -Dsonar.projectKey=sample-app \
+                    -Dsonar.sources=. \
+                    -Dsonar.host.url=http://sonarqube:9000 \
+                    -Dsonar.login=$SONAR_AUTH_TOKEN
+                    '''
+
                 }
             }
         }
 
         stage('Build Docker Image') {
+
             steps {
-                sh 'docker build -t ${IMAGE_NAME}:latest .'
+
+                sh '''
+                docker build -t $IMAGE_NAME .
+                '''
+
             }
+
         }
 
     }
@@ -45,11 +53,15 @@ pipeline {
     post {
 
         success {
-            echo 'Pipeline completed successfully.'
+
+            echo "Pipeline Successful"
+
         }
 
         failure {
-            echo 'Pipeline failed.'
+
+            echo "Pipeline Failed"
+
         }
 
     }

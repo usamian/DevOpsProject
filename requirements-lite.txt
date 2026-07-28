@@ -1,0 +1,18 @@
+# Atlas AI - Lite Requirements (Core dependencies)
+
+flask>=3.0.3
+flask-cors>=4.0.1
+flask-session>=0.8.0
+requests>=2.32.2
+
+python-dotenv>=1.0.1
+
+pandas>=2.2.2
+numpy>=1.26.4
+
+beautifulsoup4>=4.12.3
+lxml>=5.2.2
+
+pydantic>=2.7.1
+loguru>=0.7.2
+colorama>=0.4.6
